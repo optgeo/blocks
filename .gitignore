@@ -3,5 +3,5 @@
 *.mbtiles-journal
 *.txt.gz
 *.pbf
-
-
+*.las
+*.txt
