@@ -46,13 +46,19 @@ end
 
 task :map do
   Dir.glob("#{DST_DIR}/*.txt.gz").each {|path|
+    dst_path = "mbtiles/#{File.basename(path, '.txt.gz')}.mbtiles"
+    next if File.exist?(dst_path) && !File.exist?("#{dst_path}-journal")
     cmd = []
     MINZOOM.upto(MAXZOOM) {|z|
-      cmd.push "(gzcat #{path} | Z=#{z} rake _map | sort | uniq)"
+      c = <<-EOS
+(gzcat #{path} | Z=#{z} rake _map | uniq | sort | uniq | \
+rake _togeojson)
+      EOS
+      cmd.push(c.strip)
     }
     cmd = "(#{cmd.join('; ')})"
     cmd += <<-EOS
- | tippecanoe -f -o mbtiles/#{File.basename(path, '.txt.gz')}.mbtiles \
+ | tippecanoe -f -o #{dst_path} \
 --minimum-zoom=#{MINZOOM - DZ} --maximum-zoom=#{MAXZOOM - DZ}
     EOS
     sh cmd
@@ -68,13 +74,19 @@ task :_map do
     dst_f = f >> dz
     dst_x = x >> dz 
     dst_y = y >> dz
-    f = zfxy2geojson(dst_z, dst_f, dst_x, dst_y)
+    print "#{[dst_z, dst_f, dst_x, dst_y].join('/')}\n"
+  end
+end
+
+task :_togeojson do
+  while STDIN.gets
+    (z, f, x, y) = $_.strip.split('/').map {|v| v.to_i}
+    f = zfxy2geojson(z, f, x, y)
     f[:tippecanoe] = {
       :layer => 'zfxy',
-      :minzoom => dst_z - DZ,
-      :maxzoom => dst_z - DZ,
+      :minzoom => z - DZ,
+      :maxzoom => z - DZ,
     }
-    #print "#{[dst_z, dst_f, dst_x, dst_y].join('/')}\n"
     print "\x1e#{JSON.dump(f)}\n"
   end
 end
