@@ -1,0 +1,7 @@
+*.zip
+*.mbtiles
+*.mbtiles-journal
+*.txt.gz
+*.pbf
+
+

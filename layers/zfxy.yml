@@ -1,0 +1,29 @@
+id: zfxy
+source: zfxy
+source-layer: zfxy
+type: fill-extrusion
+maxzoom: 24
+paint:
+  fill-extrusion-base: 
+    - get
+    - base
+  fill-extrusion-height:
+    - '+'
+    - - get
+      - height
+    - - get
+      - base
+  fill-extrusion-color:
+    - match
+    - - get
+      - parity
+    - 0
+    - - rgb
+      - 0
+      - 255
+      - 255
+    - - rgb
+      - 255
+      - 255
+      - 0
+  fill-extrusion-opacity: 0.9
