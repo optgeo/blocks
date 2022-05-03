@@ -20,6 +20,7 @@ pdal translate #{DST_DIR}/#{ENV['FN']}.las STDOUT \
   EOS
 end
 
+desc 'download las file and create zfxy txt at 1m GSD'
 task :zfxy do
   File.foreach(TXT_PATH) {|l|
     url = l[0 .. l.rindex('/') - 1]
@@ -44,6 +45,7 @@ task :_filter do
   end
 end
 
+desc 'create mbtiles from txt.gz'
 task :map do
   Dir.glob("#{DST_DIR}/*.txt.gz").each {|path|
     dst_path = "mbtiles/#{File.basename(path, '.txt.gz')}.mbtiles"
@@ -103,12 +105,14 @@ budo -d docs
   EOS
 end
 
+desc 'deply tiles from a bunch of mbtiles'
 task :tiles do
   mbtiles = Dir.glob("mbtiles/*.mbtiles").filter {|path|
     not File.exist?("#{path}-journal")
   }
+#tile-join -f -e docs/zxy --no-tile-compression \
   sh <<-EOS
-tile-join -f -e docs/zxy --no-tile-compression \
+tile-join -f -o tiles.mbtiles \
 --no-tile-size-limit \
 #{mbtiles.join(' ')}
   EOS
