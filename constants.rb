@@ -1,4 +1,3 @@
-SRC_PATH = "../Downloads/08NE6694.las"
 #TXT_PATH = 'all.txt'
 #TXT_PATH = 'fujisan.txt'
 TXT_PATH = 'chuseibu.txt'
