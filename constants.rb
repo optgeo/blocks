@@ -9,4 +9,6 @@ MAXZOOM = 25
 KEI = 8
 SRC_EPSG = "EPSG:#{2442 + KEI}"
 DST_EPSG = "EPSG:4326"
-
+PORT = 8006
+MBTILES_PATH = 'tiles.mbtiles'
+URL_PATH = 'blocks'

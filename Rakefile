@@ -99,10 +99,22 @@ charites build --provider=mapbox style.yml docs/style.json
   EOS
 end
 
-task :host do
+task :budo do
   sh <<-EOS
 budo -d docs
   EOS
+end
+
+desc 'serve the site'
+task :host do
+  while true
+    sh "ruby serve.rb -p #{PORT}"
+  end
+end
+
+task :restart do
+  sh "sudo systemctl stop optgeo.blocks.service"
+  sh "sudo systemctl start optgeo.blocks.service"
 end
 
 desc 'deply tiles from a bunch of mbtiles'
@@ -112,7 +124,7 @@ task :tiles do
   }
 #tile-join -f -e docs/zxy --no-tile-compression \
   sh <<-EOS
-tile-join -f -o tiles.mbtiles \
+tile-join -f -o #{MBTILES_PATH} \
 --no-tile-size-limit \
 #{mbtiles.join(' ')}
   EOS
