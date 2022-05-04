@@ -6,3 +6,5 @@
 *.las
 dst/*.txt
 docs/zxy
+filelist.tmp
+

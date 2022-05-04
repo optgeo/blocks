@@ -45,11 +45,15 @@ task :_filter do
   end
 end
 
+def dst_path(path)
+  "mbtiles/#{File.basename(path, '.txt.gz')}.mbtiles"
+end
+
 desc 'create mbtiles from txt.gz'
 task :map do
   Dir.glob("#{DST_DIR}/*.txt.gz").each {|path|
-    dst_path = "mbtiles/#{File.basename(path, '.txt.gz')}.mbtiles"
-    next if File.exist?(dst_path) && !File.exist?("#{dst_path}-journal")
+    next if File.exist?(dst_path(path)) && 
+      !File.exist?("#{dst_path(path)}-journal")
     cmd = []
     MINZOOM.upto(MAXZOOM) {|z|
       c = <<-EOS
@@ -60,7 +64,7 @@ rake _togeojson)
     }
     cmd = "(#{cmd.join('; ')})"
     cmd += <<-EOS
- | tippecanoe -f -o #{dst_path} \
+ | tippecanoe -f -o #{dst_path(path)} \
 --minimum-zoom=#{MINZOOM - DZ} --maximum-zoom=#{MAXZOOM - DZ}
     EOS
     sh cmd
@@ -92,6 +96,31 @@ task :_togeojson do
     print "\x1e#{JSON.dump(f)}\n"
   end
 end
+
+desc 'parallel version of map'
+task :parallel_map do
+  File.open('filelist.tmp', 'w') {|w|
+    Dir.glob('dst/*.txt.gz').each {|path|
+      next if File.exist?(dst_path(path))
+      w.print path, "\n"
+    }
+  }
+  sh <<-EOS
+parallel -j2 SRC_PATH={} rake _parallel_map1 < filelist.tmp; \
+rm filelist.tmp
+  EOS
+end
+
+task :_parallel_map1 do
+  sh <<-EOS
+parallel -j2 --line-buffer "gzcat #{ENV['SRC_PATH']} | \
+Z={} rake _map | uniq | sort | uniq | rake _togeojson" \
+::: #{(MINZOOM..MAXZOOM).to_a.join(' ')} | \
+tippecanoe -f -o #{dst_path(ENV['SRC_PATH'])} \
+--minimum-zoom=#{MINZOOM - DZ} --maximum-zoom=#{MAXZOOM - DZ}
+  EOS
+end
+
 
 task :style do
   sh <<-EOS
