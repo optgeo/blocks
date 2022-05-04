@@ -57,7 +57,7 @@ task :map do
     cmd = []
     MINZOOM.upto(MAXZOOM) {|z|
       c = <<-EOS
-(gzcat #{path} | Z=#{z} rake _map | uniq | sort | uniq | \
+(zcat #{path} | Z=#{z} rake _map | uniq | sort | uniq | \
 rake _togeojson)
       EOS
       cmd.push(c.strip)
@@ -113,7 +113,7 @@ end
 
 task :_parallel_map1 do
   sh <<-EOS
-parallel -j2 --line-buffer "gzcat #{ENV['SRC_PATH']} | \
+parallel -j2 --line-buffer "zcat #{ENV['SRC_PATH']} | \
 Z={} rake _map | uniq | sort | uniq | rake _togeojson" \
 ::: #{(MINZOOM..MAXZOOM).to_a.join(' ')} | \
 tippecanoe -f -o #{dst_path(ENV['SRC_PATH'])} \
