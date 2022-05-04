@@ -4,5 +4,5 @@
 *.txt.gz
 *.pbf
 *.las
-*.txt
+dst/*.txt
 docs/zxy
