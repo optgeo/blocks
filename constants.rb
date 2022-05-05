@@ -11,4 +11,4 @@ DST_EPSG = "EPSG:4326"
 PORT = 8006
 MBTILES_PATH = 'tiles.mbtiles'
 URL_PATH = 'blocks'
-ZCAT = 'gzcat'
+ZCAT = `uname` == 'Darwin' ? 'gzcat' : 'zcat'
