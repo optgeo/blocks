@@ -2,7 +2,9 @@
 #TXT_PATH = 'fujisan.txt'
 TXT_PATH = 'chuseibu.txt'
 DST_DIR = 'dst'
-DZ = 7
+DZ = 6
+J = 3
+MBTILES_DIR = "mbtiles#{DZ}"
 MINZOOM = 12
 MAXZOOM = 25
 KEI = 8

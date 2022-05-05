@@ -46,7 +46,7 @@ task :_filter do
 end
 
 def dst_path(path)
-  "mbtiles/#{File.basename(path, '.txt.gz')}.mbtiles"
+  "#{MBTILES_DIR}/#{File.basename(path, '.txt.gz')}.mbtiles"
 end
 
 desc 'create mbtiles from txt.gz'
@@ -106,7 +106,7 @@ task :parallel_map do
     }
   }
   sh <<-EOS
-parallel -j2 SRC_PATH={} rake _parallel_map1 < filelist.tmp; \
+parallel -j#{J} SRC_PATH={} rake _parallel_map1 < filelist.tmp; \
 rm filelist.tmp
   EOS
 end
@@ -148,10 +148,9 @@ end
 
 desc 'deply tiles from a bunch of mbtiles'
 task :tiles do
-  mbtiles = Dir.glob("mbtiles/*.mbtiles").filter {|path|
+  mbtiles = Dir.glob("#{MBTILES_DIR}/*.mbtiles").filter {|path|
     not File.exist?("#{path}-journal")
   }
-#tile-join -f -e docs/zxy --no-tile-compression \
   sh <<-EOS
 tile-join -f -o #{MBTILES_PATH} \
 --no-tile-size-limit \
