@@ -1,6 +1,13 @@
 require './constants.rb'
 require './zfxy.rb'
 require 'json'
+require 'zlib'
+
+task :monitor do
+  sh <<-EOS
+watch -n 60 "ls #{DST_DIR}/*.txt.gz | wc -l; ls #{MBTILES_DIR}/*.mbtiles | wc -l"
+  EOS
+end
 
 task :clean do
   sh <<-EOS
@@ -35,6 +42,42 @@ rm #{DST_DIR}/#{fn}.zip #{DST_DIR}/#{fn}.las; \
 gzip -9 #{DST_DIR}/#{fn}.txt
     EOS
   }
+end
+
+task :_list do
+  File.foreach(TXT_PATH) {|l|
+    fn = l.strip.split('/')[-1].sub('.zip', '')
+    if File.exist?("#{DST_DIR}/#{fn}.txt.gz")
+      $stderr.print "Skip #{fn}\n"
+    else
+      print l
+    end
+  }
+end
+
+desc 'parallel version of zfxy'
+task :parallel_zfxy do
+  sh <<-EOS
+rake _list | parallel -j#{J} "L={} rake _parallel_zfxy" 
+  EOS
+end
+
+task :_parallel_zfxy do
+  l = ENV['L']
+  url = l[0 .. l.rindex('/') - 1]
+  fn = l.strip.split('/')[-1].sub('.zip', '')
+  if File.exist?("#{DST_DIR}/#{fn}.txt.gz")
+    $stderr.print "Skip #{fn}\n"
+  else
+    sh <<-EOS
+curl -o #{TMP_DIR}/#{fn}.zip #{url}/#{fn}.zip; \
+unzip -o -d #{DST_DIR} #{TMP_DIR}/#{fn}.zip; \
+FN=#{fn} rake stream | rake _filter | uniq | sort | uniq \
+> #{DST_DIR}/#{fn}.txt; \
+rm #{TMP_DIR}/#{fn}.zip #{DST_DIR}/#{fn}.las; \
+gzip -9 #{DST_DIR}/#{fn}.txt
+    EOS
+  end
 end
 
 task :_filter do
@@ -100,7 +143,7 @@ end
 desc 'parallel version of map'
 task :parallel_map do
   File.open('filelist.tmp', 'w') {|w|
-    Dir.glob('dst/*.txt.gz').each {|path|
+    Dir.glob('dst/*.txt.gz').shuffle.each {|path|
       next if File.exist?(dst_path(path))
       w.print path, "\n"
     }
@@ -146,15 +189,76 @@ task :restart do
   sh "sudo systemctl start optgeo.blocks.service"
 end
 
+def mbtiles
+  Dir.glob("#{MBTILES_DIR}/*.mbtiles").select {|path|
+    not File.exist?("#{path}-journal")
+  }
+end
+
+def txt
+  Dir.glob("#{DST_DIR}/*.txt.gz").select {|path|
+    not File.exist?("#{path.sub('txt.gz', 'las')}")
+  }
+end
+
+def yield_zfxy
+  txt.each {|src_path|
+    Zlib::GzipReader.open(src_path) {|gz|
+      gz.each_line {|l|
+        yield l.strip.split('/').map {|v| v.to_i}
+      }
+    }
+  }
+end
+
 desc 'deply tiles from a bunch of mbtiles'
 task :tiles do
-  mbtiles = Dir.glob("#{MBTILES_DIR}/*.mbtiles").filter {|path|
-    not File.exist?("#{path}-journal")
+  sh <<-EOS
+tile-join -f -o #{MBTILES_PATH} \
+--no-tile-size-limit \
+--maximum-zoom=17 \
+#{mbtiles.join(' ')}
+  EOS
+end
+
+desc 'group-wise integration of mbtiles'
+task :group_tiles do
+  elements = mbtiles
+  sh <<-EOS
+rm -r #{GROUPS_DIR}
+mkdir #{GROUPS_DIR}
+  EOS
+  (elements.size.to_f / GROUP_SIZE).ceil.times {|i|
+    sh <<-EOS
+tile-join -f -o #{GROUPS_DIR}/group#{i}.mbtiles \
+--no-tile-size-limit \
+#{elements[i * GROUP_SIZE .. (i + 1) * GROUP_SIZE - 1].join(' ')}
+    EOS
   }
   sh <<-EOS
 tile-join -f -o #{MBTILES_PATH} \
 --no-tile-size-limit \
-#{mbtiles.join(' ')}
+#{GROUPS_DIR}/*.mbtiles
+  EOS
+end
+
+desc 'create tiles with z=10 blocks'
+task :global_10 do
+  yield_zfxy {|zfxy|
+    dz = zfxy[0] - 10
+    block_zfxy = [10, zfxy[1] >> dz, zfxy[2] >> dz, zfxy[3] >> dz]
+    print "#{zfxy.inspect} -> #{block_zfxy.inspect}\n"
+  }
+end
+
+task :_health_check do
+  mbtiles.each {|path|
+    sh <<-EOS
+tile-join -f -o tmp.mbtiles --no-tile-size-limit #{path}
+    EOS
+  }
+  sh <<-EOS
+rm tmp.mbtiles
   EOS
 end
 
