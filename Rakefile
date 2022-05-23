@@ -3,6 +3,10 @@ require './zfxy.rb'
 require 'json'
 require 'zlib'
 
+task :modular_tiles do
+  sh "ruby modular_tiles.rb"
+end
+
 task :monitor do
   sh <<-EOS
 watch -n 60 "ls #{DST_DIR}/*.txt.gz | wc -l; ls #{MBTILES_DIR}/*.mbtiles | wc -l"
@@ -78,6 +82,22 @@ rm #{TMP_DIR}/#{fn}.zip #{DST_DIR}/#{fn}.las; \
 gzip -9 #{DST_DIR}/#{fn}.txt
     EOS
   end
+end
+
+task :_progress do
+  %w{all fujisan chuseibu}.each {|area|
+    done = 0
+    todo = 0
+    File.foreach("#{area}.txt") {|l|
+      fn = l.strip.split('/')[-1].sub('.zip', '')
+      if File.exist?("#{DST_DIR}/#{fn}.txt.gz")
+        done += 1
+      else
+        todo += 1
+      end
+    }
+    print "#{area}: #{done} done / #{todo} to do\n"
+  }
 end
 
 task :_filter do
