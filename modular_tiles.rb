@@ -5,8 +5,10 @@ require 'zlib'
 require 'set'
 require 'json'
 
+N = 4
+
 def stream_txt_path
-  Dir.glob("#{DST_DIR}/*.txt.gz")[0..9].each {|path|
+  Dir.glob("#{DST_DIR}/*.txt.gz").shuffle[0..N - 1].each {|path|
     yield path
   }
 end
@@ -15,12 +17,12 @@ def stream_zfxy
   count = 0
   stream_txt_path {|txt_path|
     count += 1
-    $stderr.print "--- processing #{txt_path} ##{count}\n"
-    MAXZOOM.downto(MINZOOM) {|dst_z|
-      Zlib::GzipReader.open(txt_path) {|gz|
-        set = Set.new
-        gz.each_line {|l|
-          (z, f, x, y) = l.strip.split('/').map {|v| v.to_i}
+    $stderr.print "--- processing #{txt_path} ##{count} of #{N}\n"
+    Zlib::GzipReader.open(txt_path) {|gz|
+      set = Set.new
+      gz.each_line {|l|
+        (z, f, x, y) = l.strip.split('/').map {|v| v.to_i}
+        MAXZOOM.downto(MINZOOM) {|dst_z|
           dz = z - dst_z
           set << [
             dst_z,
@@ -29,9 +31,9 @@ def stream_zfxy
             y >> dz
           ]
         }
-        set.each {|v|
-          yield v
-        }
+      }
+      set.each {|v|
+        yield v
       }
     }
   }
@@ -46,10 +48,11 @@ def tippecanoe(key)
 tippecanoe --force \
 --minimum-zoom=#{MINZOOM - DZ} --maximum-zoom=#{MAXZOOM - DZ} \
 --no-tile-size-limit \
+--layer=default \
 -o #{mbtiles_path}  #{fifo_path}
   EOS
   spawn cmd
-  $stderr.print "** fifo #{fifo_path} **\n"
+  $stderr.print "\t created #{fifo_path}\n"
   File.open(fifo_path, 'w')
 end
 
@@ -63,7 +66,7 @@ end
 
 def dst_fifo_key(z, f, x, y)
   dst_z = z - DZ
-  if dst_z <= MZ
+  if dst_z < MZ
     '0'
   else
     dz = z - MZ
