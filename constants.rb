@@ -1,5 +1,5 @@
 # G空間情報センターの点群データのURLリストのパス
-TXT_PATH = 'all.txt'
+TXT_PATH = 'rev_chuseibu.txt'
 # obs: 書き出す MBTiles ファイルのパス（非分割の場合）
 MBTILES_PATH = 'tiles.mbtiles'
 
@@ -10,14 +10,14 @@ MBTILES_DIR = "mbtiles"
 # obs: グループごとにまとめた MBTiles を書き出すディレクトリ
 GROUPS_DIR = 'groups'
 # モジュール生産した MBTiles を書き出すディレクトリ
-MODULES_DIR = 'modules330'
+MODULES_DIR = 'modules'
 # 一時ファイルのディレクトリ
 TMP_DIR = '/tmp'
 
 # ZFXYのzとそれが格納されるタイルのzの差
 DZ = 6
 # モジュールのズームレベル
-MZ = 10
+MZ = 12
 # GNU Parallel で並行実行する並行度
 J = 3
 # 生産するZFXYの最小ズーム
