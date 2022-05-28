@@ -200,7 +200,7 @@ end
 desc 'serve the site'
 task :host do
   while true
-    sh "ruby serve.rb -p #{PORT}"
+    sh "ruby modular_serve.rb -p #{PORT}"
   end
 end
 
