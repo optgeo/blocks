@@ -28,7 +28,7 @@ paint:
         - 255
         - 255
         - 0
-    - 14
+    - 15
     - - interpolate-lab
       - - cubic-bezier
         - 0
