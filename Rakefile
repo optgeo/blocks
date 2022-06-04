@@ -85,7 +85,7 @@ gzip -9 #{DST_DIR}/#{fn}.txt
 end
 
 task :_progress do
-  %w{all fujisan chuseibu}.each {|area|
+  %w{all fujisan chuseibu izuseibu}.each {|area|
     done = 0
     todo = 0
     File.foreach("#{area}.txt") {|l|

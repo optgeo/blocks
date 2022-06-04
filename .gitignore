@@ -7,4 +7,6 @@
 dst/*.txt
 docs/zxy
 filelist.tmp
-
+rev_*.txt
+lla.txt
+.rake_tasks~

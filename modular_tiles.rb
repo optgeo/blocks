@@ -5,7 +5,7 @@ require 'zlib'
 require 'set'
 require 'json'
 
-N = 4
+N = 8000
 
 def stream_txt_path
   Dir.glob("#{DST_DIR}/*.txt.gz").shuffle[0..N - 1].each {|path|
@@ -22,7 +22,7 @@ def stream_zfxy
       set = Set.new
       gz.each_line {|l|
         (z, f, x, y) = l.strip.split('/').map {|v| v.to_i}
-        MAXZOOM.downto(MINZOOM) {|dst_z|
+        (MAXZOOM - 2).downto(MINZOOM) {|dst_z|
           dz = z - dst_z
           set << [
             dst_z,
@@ -46,7 +46,7 @@ def tippecanoe(key)
   File.mkfifo(fifo_path)
   cmd = <<-EOS
 tippecanoe --force \
---minimum-zoom=#{MINZOOM - DZ} --maximum-zoom=#{MAXZOOM - DZ} \
+--minimum-zoom=#{MINZOOM - DZ} --maximum-zoom=#{(MAXZOOM - 2) - DZ} \
 --no-tile-size-limit \
 --layer=default \
 -o #{mbtiles_path}  #{fifo_path}
@@ -57,8 +57,12 @@ tippecanoe --force \
 end
 
 def close_fifos
+  n_all = $fifos.size
+  n = 0
   $fifos.each {|k, v|
     v.close 
+    n += 1
+    $stderr.print "creating tiles: #{n} of #{n_all}.\n"
     Process.wait
     FileUtils.rm("#{MODULES_DIR}/#{k}.fifo")
   }

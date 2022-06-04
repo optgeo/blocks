@@ -13,7 +13,7 @@
       "tiles": [
         "https://x.optgeo.org/blocks/zxy/{z}/{x}/{y}.pbf"
       ],
-      "maxzoom": 19,
+      "maxzoom": 17,
       "minzoom": 6,
       "attribution": "UNVT Community, 静岡県"
     },

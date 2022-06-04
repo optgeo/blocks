@@ -1,5 +1,5 @@
 # G空間情報センターの点群データのURLリストのパス
-TXT_PATH = 'rev_chuseibu.txt'
+TXT_PATH = 'rev_izuseibu.txt'
 # obs: 書き出す MBTiles ファイルのパス（非分割の場合）
 MBTILES_PATH = 'tiles.mbtiles'
 
